@@ -5,8 +5,8 @@
   
   <entry>
     <title>pwn</title>
-    <link href="/2025/10/03/pwn/"/>
-    <url>/2025/10/03/pwn/</url>
+    <link href="/2025/10/03/canary%E7%BB%95%E8%BF%87/"/>
+    <url>/2025/10/03/canary%E7%BB%95%E8%BF%87/</url>
     
     <content type="html"><![CDATA[<p><strong>1.通过确认偏移(偏移&#x3D;变量自身偏移+变量到canary的偏移)来利用输出函数达到泄露canary的值：</strong><br>(1).64位：%n$p<br>(2).32位：%n$x<br><strong>注意：%n$p是泄露偏移为n的栈上的数据，%n$s是泄露偏移为n的栈上的地址的值(该偏移对应的栈上的数据必须是地址)。</strong></p><p><strong>2.通过溢出来利用输出函数泄露canary的值：</strong><br>**(1).**payload&#x3D;b’a’*offset+b’b’*0x1(注意send送，因为sendline会多发一个\n)<br>p.recvuntil(b’b’)<br>32位：canary&#x3D;u32(p.recv(3).rjust(4,b’\x00’))<br>64位：canary&#x3D;u64(p.recv(7).rjust(8,b’\x00’))</p><p>**(2).**利用sendline的特性：<br>payload&#x3D;b’a’*offset(注意用sendline发送)<br>p.recvuntil(b’a’*offset)<br>canary&#x3D;u32(p.recv(4))-0xa(减0xa是为了把sendline发送的换行符\n减掉)</p><p><strong>利用gdb调试</strong><br>**1.**随便在canary设置完的地方下断点<br>**2.**输入canary查找canary的值以及所在地址<br>**3.**stack 50找到该地址，计算偏移：</p><p>因为是六十四位文件所以他格式化字符串时候前六个参数是在寄存器中的而栈空间这个记录的第一个偏移其实是真实的第七个数据单元所以这边算出来还要再加6，即为canary值。<br>上图偏移就为184&#x2F;8&#x3D;23。23+6&#x3D;29。</p>]]></content>
     
