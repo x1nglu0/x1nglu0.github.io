@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>buuctf_day1</title>
+    <link href="/2025/10/26/buuctf-day1/"/>
+    <url>/2025/10/26/buuctf-day1/</url>
+    
+    <content type="html"><![CDATA[<h1 id="Buuctf-Writeup-Day1"><a href="#Buuctf-Writeup-Day1" class="headerlink" title="Buuctf Writeup - Day1"></a>Buuctf Writeup - Day1</h1><h2 id="1-test-your-nc"><a href="#1-test-your-nc" class="headerlink" title="1. test your nc"></a>1. test your nc</h2><p><strong>题目描述</strong>：一道简单的nc连接题。</p><p><strong>解题步骤</strong>：</p><ul><li>使用nc连接靶机</li><li>连接后直接执行<code>cat flag</code>即可获取flag</li></ul><h2 id="2-rip"><a href="#2-rip" class="headerlink" title="2. rip"></a>2. rip</h2><p><strong>题目描述</strong>：nc连接后什么都没有。</p><p><strong>解题步骤</strong>：</p><ul><li>用checksec发现no canary</li><li>file后发现是64位文件</li><li>放入IDA后发现有get函数</li></ul><p><img src="/image/buuctfday1/1.png"></p><p>get函数不会限制输入的字节数，于是我们想到栈溢出，用栈溢出来覆盖我们发现的<code>system(&quot;/bin/sh&quot;)</code>的地址。</p><p><img src="/image/buuctfday1/2.png"></p><p>栈溢出后覆盖到该地址即可获得系统权限。于是有exp：</p><p><img src="/image/buuctfday1/3.png"></p><p>运行后即可获得flag：</p><p><img src="/image/buuctfday1/4.png"></p><h2 id="3-warmup-csaw-2016-1"><a href="#3-warmup-csaw-2016-1" class="headerlink" title="3. warmup_csaw_2016_1"></a>3. warmup_csaw_2016_1</h2><p><strong>解题步骤</strong>：</p><ul><li>前面操作相同不再赘述</li><li>打开IDA后发现：</li></ul><p><img src="/image/buuctfday1/5.png"></p><p>有get函数还发现了cat flag：</p><p><img src="/image/buuctfday1/6.png"></p><p>那我们一样栈溢出后覆盖地址到cat flag前的push地址即可。于是有以下exp：</p><p><img src="/image/buuctfday1/7.png"></p><p>运行即可得到flag：</p><p><img src="/image/buuctfday1/8.png"></p><h2 id="4-ciscn-2019-n-1"><a href="#4-ciscn-2019-n-1" class="headerlink" title="4. ciscn_2019_n_1"></a>4. ciscn_2019_n_1</h2><p><strong>解题步骤</strong>：</p><ul><li>checksec后发现no canary</li><li>file后发现是64位文件</li><li>放入64位IDA后查看main函数：</li></ul><p><img src="/image/buuctfday1/9.png"></p><p>发现它先让v2&#x3D;0.0，有一个条件判断，我们只要让v2&#x3D;11.28125即可执行cat flag获得flag。于是我们想到栈溢出，栈溢出不仅可以覆盖地址，还可以覆盖变量值，我们可以通过栈溢出覆盖v2，使其变为11.28125即可获得flag。</p><p>注：11.28125在64位中为41348000</p><p>于是有exp：</p><p><img src="/image/buuctfday1/10.png"></p><p>运行后即可获得flag：</p><p><img src="/image/buuctfday1/11.png"></p><h2 id="5-pwn1-sctf-2016"><a href="#5-pwn1-sctf-2016" class="headerlink" title="5. pwn1_sctf_2016"></a>5. pwn1_sctf_2016</h2><p><strong>解题步骤</strong>：</p><ul><li>打开IDA后分析：</li></ul><p><img src="/image/buuctfday1/12.png"></p><p>replace函数将”I”替换为”you”（从1字节变为3字节），通过字符逃逸实现栈溢出。fgets有限制输入字节数，但通过字符替换可以增加字节数目。</p><p>查看s的偏移量：</p><p><img src="/image/buuctfday1/13.png"></p><p>得出偏移量为03c+4&#x3D;0x40&#x3D;64个字节。</p><p>找到cat flag调用的地址：</p><p><img src="/image/buuctfday1/14.png"></p><p>构造exp（限制23字节）：</p><p><img src="/image/buuctfday1/15.png"></p><p>运行后即可获得flag：</p><p><img src="/image/buuctfday1/16.png"></p><h2 id="6-jarvisoj-level0-1"><a href="#6-jarvisoj-level0-1" class="headerlink" title="6. jarvisoj_level0_1"></a>6. jarvisoj_level0_1</h2><p><strong>解题步骤</strong>：</p><ul><li>打开IDA后查看callsystem函数：</li></ul><p><img src="/image/buuctfday1/17.png"></p><p>得到系统调用的地址。</p><p>查看main函数：</p><p><img src="/image/buuctfday1/18.png"></p><p>是一个明显的栈溢出，读取200字节。通过简单栈溢出覆盖到系统调用地址即可，于是有exp：</p><p><img src="/image/buuctfday1/19.png"></p><p>运行后即可获得flag：</p><p><img src="/image/buuctfday1/20.png"></p><h2 id="7-第五空间2019决赛-PWN5"><a href="#7-第五空间2019决赛-PWN5" class="headerlink" title="7. 第五空间2019决赛 PWN5"></a>7. 第五空间2019决赛 PWN5</h2><p><strong>解题步骤</strong>：</p><ul><li>checksec后发现与之前截然不同的结果：有canary保护</li><li>需要想办法绕过canary保护</li><li>查看main函数：</li></ul><p><img src="/image/buuctfday1/21.png"></p><p>发现它先生成一个随机数（4字节），如果输入与随机数相同，即可获得flag。可以发现read可以栈溢出，可以通过栈溢出改变随机数从而通过if函数，这就要绕过canary保护。</p><p><strong>Canary保护原理</strong>：是一种用于防护栈溢出的安全机制。其基本原理是在函数调用时，在栈帧的上方放入一个随机值（称为”Canary”），当函数返回时，系统会检查这个随机值是否被修改。如果随机值被修改，说明可能发生了栈溢出，程序将终止运行，从而防止潜在的缓冲区溢出攻击。</p><ul><li>找到canary的偏移量：</li></ul><p><img src="/image/buuctfday1/22.png"></p><ul><li>编写exp：</li></ul><p><img src="/image/buuctfday1/23.png"></p><p>注：特别要注意的是<code>%n</code>这个格式化字符串，它的功能是将<code>%n</code>之前打印出来的字符个数（四字节）写入参数地址处（赋值给一个变量）。</p><ul><li>运行后即可获得flag：</li></ul><p><img src="/image/buuctfday1/24.png"></p><h2 id="8-jarvisoj-level2"><a href="#8-jarvisoj-level2" class="headerlink" title="8. jarvisoj_level2"></a>8. jarvisoj_level2</h2><p><strong>解题步骤</strong>：</p><ul><li>同样的步骤之后查看main函数：</li></ul><p><img src="/image/buuctfday1/25.png"></p><p>发现明显栈溢出。但发现system函数调用和<code>/bin/sh</code>是分隔的。于是要把它们连接。</p><p>注：32位的分布是：返回地址+下一次的返回地址+参数1+参数2+…，这里返回地址可以随便指定。</p><ul><li>编写exp：</li></ul><p><img src="/image/buuctfday1/26.png"></p><p>运行后即可获得flag。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>ctf</category>
+      
+      <category>pwn</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>pwn</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>ret2libc</title>
     <link href="/2025/10/04/ret2libc/"/>
     <url>/2025/10/04/ret2libc/</url>
