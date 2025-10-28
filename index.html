@@ -252,6 +252,80 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2025/10/28/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/" target="_self">
+          <img src="/image/17.jpg" srcset="/img/loading.gif" lazyload alt="pwn的部分堆题复现">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/10/28/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/" target="_self">
+          pwn的部分堆题复现
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2025/10/28/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/" target="_self">
+        <div>
+          1. hitcontraining_heapcreator保护机制检查 主函数分析 漏洞点分析查看各个函数，发现漏洞在edit函数： 可以看到函数可以多覆盖一位，存在off-by-one漏洞。edit时可以多写入一个字节，通过溢出覆盖下一个chunk的size字段。 利用思路 程序存在复用机制，如果chunk都处于inuse状态，上一个chunk可以使用到下一个chunk的prev_size 通过
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-10-28 20:55" pubdate>
+              2025-10-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/ctf/" class="category-chain-item">ctf</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/ctf/pwn/" class="category-chain-item">pwn</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/pwn/">#pwn</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2025/10/26/buuctf-day1/" target="_self">
           <img src="/image/12.jpg" srcset="/img/loading.gif" lazyload alt="buuctf_day1">
         </a>

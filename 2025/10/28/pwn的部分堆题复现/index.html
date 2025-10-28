@@ -19,24 +19,24 @@
   <meta name="author" content="x1nglu0">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Buuctf Writeup - Day11. test your nc题目描述：一道简单的nc连接题。 解题步骤：  使用nc连接靶机 连接后直接执行cat flag即可获取flag  2. rip题目描述：nc连接后什么都没有。 解题步骤：  用checksec发现no canary file后发现是64位文件 放入IDA后发现有get函数   get函数不会限制输入的字节数，于是我们想到栈溢">
+    <meta name="description" content="1. hitcontraining_heapcreator保护机制检查 主函数分析 漏洞点分析查看各个函数，发现漏洞在edit函数： 可以看到函数可以多覆盖一位，存在off-by-one漏洞。edit时可以多写入一个字节，通过溢出覆盖下一个chunk的size字段。 利用思路 程序存在复用机制，如果chunk都处于inuse状态，上一个chunk可以使用到下一个chunk的prev_size 通过">
 <meta property="og:type" content="article">
-<meta property="og:title" content="buuctf_day1">
-<meta property="og:url" content="http://x1nglu0.github.io/2025/10/26/buuctf-day1/index.html">
+<meta property="og:title" content="pwn的部分堆题复现">
+<meta property="og:url" content="http://x1nglu0.github.io/2025/10/28/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/index.html">
 <meta property="og:site_name" content="x1nglu0的个人博客">
-<meta property="og:description" content="Buuctf Writeup - Day11. test your nc题目描述：一道简单的nc连接题。 解题步骤：  使用nc连接靶机 连接后直接执行cat flag即可获取flag  2. rip题目描述：nc连接后什么都没有。 解题步骤：  用checksec发现no canary file后发现是64位文件 放入IDA后发现有get函数   get函数不会限制输入的字节数，于是我们想到栈溢">
+<meta property="og:description" content="1. hitcontraining_heapcreator保护机制检查 主函数分析 漏洞点分析查看各个函数，发现漏洞在edit函数： 可以看到函数可以多覆盖一位，存在off-by-one漏洞。edit时可以多写入一个字节，通过溢出覆盖下一个chunk的size字段。 利用思路 程序存在复用机制，如果chunk都处于inuse状态，上一个chunk可以使用到下一个chunk的prev_size 通过">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://x1nglu0.github.io/image/12.jpg">
-<meta property="article:published_time" content="2025-10-25T16:50:34.000Z">
-<meta property="article:modified_time" content="2025-10-25T18:16:49.503Z">
+<meta property="og:image" content="http://x1nglu0.github.io/image/17.jpg">
+<meta property="article:published_time" content="2025-10-28T12:55:06.000Z">
+<meta property="article:modified_time" content="2025-10-28T13:32:50.676Z">
 <meta property="article:author" content="x1nglu0">
 <meta property="article:tag" content="pwn">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://x1nglu0.github.io/image/12.jpg">
+<meta name="twitter:image" content="http://x1nglu0.github.io/image/17.jpg">
   
   
   
-  <title>buuctf_day1 - x1nglu0的个人博客</title>
+  <title>pwn的部分堆题复现 - x1nglu0的个人博客</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -227,7 +227,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="buuctf_day1"></span>
+            <span id="subtitle" data-typed-text="pwn的部分堆题复现"></span>
           
         </div>
 
@@ -238,8 +238,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-10-26 00:50" pubdate>
-          2025年10月26日 凌晨
+        <time datetime="2025-10-28 20:55" pubdate>
+          2025年10月28日 晚上
         </time>
       </span>
     
@@ -250,7 +250,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          899 字
+          622 字
         
       </span>
     
@@ -261,7 +261,7 @@
         
         
         
-          8 分钟
+          6 分钟
         
       </span>
     
@@ -307,117 +307,99 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">buuctf_day1</h1>
+            <h1 id="seo-header">pwn的部分堆题复现</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="Buuctf-Writeup-Day1"><a href="#Buuctf-Writeup-Day1" class="headerlink" title="Buuctf Writeup - Day1"></a>Buuctf Writeup - Day1</h1><h2 id="1-test-your-nc"><a href="#1-test-your-nc" class="headerlink" title="1. test your nc"></a>1. test your nc</h2><p><strong>题目描述</strong>：一道简单的nc连接题。</p>
-<p><strong>解题步骤</strong>：</p>
-<ul>
-<li>使用nc连接靶机</li>
-<li>连接后直接执行<code>cat flag</code>即可获取flag</li>
+                <h2 id="1-hitcontraining-heapcreator"><a href="#1-hitcontraining-heapcreator" class="headerlink" title="1. hitcontraining_heapcreator"></a>1. hitcontraining_heapcreator</h2><h3 id="保护机制检查"><a href="#保护机制检查" class="headerlink" title="保护机制检查"></a>保护机制检查</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/1.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="主函数分析"><a href="#主函数分析" class="headerlink" title="主函数分析"></a>主函数分析</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/2.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="漏洞点分析"><a href="#漏洞点分析" class="headerlink" title="漏洞点分析"></a>漏洞点分析</h3><p>查看各个函数，发现漏洞在edit函数：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/3.png" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到函数可以多覆盖一位，存在off-by-one漏洞。edit时可以多写入一个字节，通过溢出覆盖下一个chunk的size字段。</p>
+<h3 id="利用思路"><a href="#利用思路" class="headerlink" title="利用思路"></a>利用思路</h3><ul>
+<li>程序存在复用机制，如果chunk都处于inuse状态，上一个chunk可以使用到下一个chunk的prev_size</li>
+<li>通过溢出修改下一个chunk的size字段</li>
+<li>修改size为0x41后free，可以一次性free掉两个堆块</li>
+<li>重新申请0x30大小的堆块，完成堆内容堆块和堆指针堆块的互换</li>
+<li>修改堆指针堆块内容泄露libc版本（通过free_got）</li>
+<li>将free函数跳转为system函数</li>
+<li>free掉heap0触发system(“&#x2F;bin&#x2F;sh”)获取shell</li>
 </ul>
-<h2 id="2-rip"><a href="#2-rip" class="headerlink" title="2. rip"></a>2. rip</h2><p><strong>题目描述</strong>：nc连接后什么都没有。</p>
-<p><strong>解题步骤</strong>：</p>
+<h3 id="调试过程"><a href="#调试过程" class="headerlink" title="调试过程"></a>调试过程</h3><p>创建两个堆块：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/4.png" srcset="/img/loading.gif" lazyload></p>
+<p>修改size为0x41：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/5.png" srcset="/img/loading.gif" lazyload></p>
+<p>free后重新申请：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/6.png" srcset="/img/loading.gif" lazyload><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/7.png" srcset="/img/loading.gif" lazyload><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/8.png" srcset="/img/loading.gif" lazyload></p>
+<p>查看libc偏移：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/9.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="EXP代码"><a href="#EXP代码" class="headerlink" title="EXP代码"></a>EXP代码</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/10.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="获取shell"><a href="#获取shell" class="headerlink" title="获取shell"></a>获取shell</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/11.png" srcset="/img/loading.gif" lazyload></p>
+<hr>
+<h2 id="2-hitcon2014-stkof"><a href="#2-hitcon2014-stkof" class="headerlink" title="2. hitcon2014_stkof"></a>2. hitcon2014_stkof</h2><h3 id="保护机制检查-1"><a href="#保护机制检查-1" class="headerlink" title="保护机制检查"></a>保护机制检查</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/12.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="主函数分析-1"><a href="#主函数分析-1" class="headerlink" title="主函数分析"></a>主函数分析</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/13.png" srcset="/img/loading.gif" lazyload><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/14.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="功能分析"><a href="#功能分析" class="headerlink" title="功能分析"></a>功能分析</h3><p><strong>选择1（创建堆块）：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/15.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>用checksec发现no canary</li>
-<li>file后发现是64位文件</li>
-<li>放入IDA后发现有get函数</li>
+<li>创建堆块并打印内容</li>
+<li>将堆块的data指针存放到dword_602100地址</li>
 </ul>
-<p><img src="/image/buuctfday1/1.png" srcset="/img/loading.gif" lazyload></p>
-<p>get函数不会限制输入的字节数，于是我们想到栈溢出，用栈溢出来覆盖我们发现的<code>system(&quot;/bin/sh&quot;)</code>的地址。</p>
-<p><img src="/image/buuctfday1/2.png" srcset="/img/loading.gif" lazyload></p>
-<p>栈溢出后覆盖到该地址即可获得系统权限。于是有exp：</p>
-<p><img src="/image/buuctfday1/3.png" srcset="/img/loading.gif" lazyload></p>
-<p>运行后即可获得flag：</p>
-<p><img src="/image/buuctfday1/4.png" srcset="/img/loading.gif" lazyload></p>
-<h2 id="3-warmup-csaw-2016-1"><a href="#3-warmup-csaw-2016-1" class="headerlink" title="3. warmup_csaw_2016_1"></a>3. warmup_csaw_2016_1</h2><p><strong>解题步骤</strong>：</p>
+<p><strong>选择2（编辑堆块）：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/16.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>前面操作相同不再赘述</li>
-<li>打开IDA后发现：</li>
+<li>可输入任意大小，存在堆溢出漏洞</li>
 </ul>
-<p><img src="/image/buuctfday1/5.png" srcset="/img/loading.gif" lazyload></p>
-<p>有get函数还发现了cat flag：</p>
-<p><img src="/image/buuctfday1/6.png" srcset="/img/loading.gif" lazyload></p>
-<p>那我们一样栈溢出后覆盖地址到cat flag前的push地址即可。于是有以下exp：</p>
-<p><img src="/image/buuctfday1/7.png" srcset="/img/loading.gif" lazyload></p>
-<p>运行即可得到flag：</p>
-<p><img src="/image/buuctfday1/8.png" srcset="/img/loading.gif" lazyload></p>
-<h2 id="4-ciscn-2019-n-1"><a href="#4-ciscn-2019-n-1" class="headerlink" title="4. ciscn_2019_n_1"></a>4. ciscn_2019_n_1</h2><p><strong>解题步骤</strong>：</p>
+<p><strong>选择3（释放堆块）：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/17.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>checksec后发现no canary</li>
-<li>file后发现是64位文件</li>
-<li>放入64位IDA后查看main函数：</li>
+<li>free函数，指针清零，无UAF漏洞</li>
 </ul>
-<p><img src="/image/buuctfday1/9.png" srcset="/img/loading.gif" lazyload></p>
-<p>发现它先让v2&#x3D;0.0，有一个条件判断，我们只要让v2&#x3D;11.28125即可执行cat flag获得flag。于是我们想到栈溢出，栈溢出不仅可以覆盖地址，还可以覆盖变量值，我们可以通过栈溢出覆盖v2，使其变为11.28125即可获得flag。</p>
-<p>注：11.28125在64位中为41348000</p>
-<p>于是有exp：</p>
-<p><img src="/image/buuctfday1/10.png" srcset="/img/loading.gif" lazyload></p>
-<p>运行后即可获得flag：</p>
-<p><img src="/image/buuctfday1/11.png" srcset="/img/loading.gif" lazyload></p>
-<h2 id="5-pwn1-sctf-2016"><a href="#5-pwn1-sctf-2016" class="headerlink" title="5. pwn1_sctf_2016"></a>5. pwn1_sctf_2016</h2><p><strong>解题步骤</strong>：</p>
+<p><strong>选择4：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/18.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>打开IDA后分析：</li>
+<li>无实际功能</li>
 </ul>
-<p><img src="/image/buuctfday1/12.png" srcset="/img/loading.gif" lazyload></p>
-<p>replace函数将”I”替换为”you”（从1字节变为3字节），通过字符逃逸实现栈溢出。fgets有限制输入字节数，但通过字符替换可以增加字节数目。</p>
-<p>查看s的偏移量：</p>
-<p><img src="/image/buuctfday1/13.png" srcset="/img/loading.gif" lazyload></p>
-<p>得出偏移量为03c+4&#x3D;0x40&#x3D;64个字节。</p>
-<p>找到cat flag调用的地址：</p>
-<p><img src="/image/buuctfday1/14.png" srcset="/img/loading.gif" lazyload></p>
-<p>构造exp（限制23字节）：</p>
-<p><img src="/image/buuctfday1/15.png" srcset="/img/loading.gif" lazyload></p>
-<p>运行后即可获得flag：</p>
-<p><img src="/image/buuctfday1/16.png" srcset="/img/loading.gif" lazyload></p>
-<h2 id="6-jarvisoj-level0-1"><a href="#6-jarvisoj-level0-1" class="headerlink" title="6. jarvisoj_level0_1"></a>6. jarvisoj_level0_1</h2><p><strong>解题步骤</strong>：</p>
+<h3 id="利用思路-1"><a href="#利用思路-1" class="headerlink" title="利用思路"></a>利用思路</h3><p>创建3个堆块进行观察：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/19.png" srcset="/img/loading.gif" lazyload></p>
+<p>发现chunk2和chunk3相邻，可以通过edit修改chunk2内容溢出到chunk3：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/20.png" srcset="/img/loading.gif" lazyload><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/21.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>利用条件：</strong></p>
 <ul>
-<li>打开IDA后查看callsystem函数：</li>
+<li>关闭PIE保护</li>
+<li>存在堆溢出漏洞</li>
+<li>知道堆块指针存放位置</li>
 </ul>
-<p><img src="/image/buuctfday1/17.png" srcset="/img/loading.gif" lazyload></p>
-<p>得到系统调用的地址。</p>
-<p>查看main函数：</p>
-<p><img src="/image/buuctfday1/18.png" srcset="/img/loading.gif" lazyload></p>
-<p>是一个明显的栈溢出，读取200字节。通过简单栈溢出覆盖到系统调用地址即可，于是有exp：</p>
-<p><img src="/image/buuctfday1/19.png" srcset="/img/loading.gif" lazyload></p>
-<p>运行后即可获得flag：</p>
-<p><img src="/image/buuctfday1/20.png" srcset="/img/loading.gif" lazyload></p>
-<h2 id="7-第五空间2019决赛-PWN5"><a href="#7-第五空间2019决赛-PWN5" class="headerlink" title="7. 第五空间2019决赛 PWN5"></a>7. 第五空间2019决赛 PWN5</h2><p><strong>解题步骤</strong>：</p>
+<p><strong>利用步骤：</strong></p>
+<ol>
+<li>在chunk2的data部分伪造fake_chunk</li>
+<li>通过堆溢出修改chunk3的prev_size和size的P标志位</li>
+<li>释放chunk3时触发向前合并，触发unlink</li>
+<li>泄露libc版本并修改函数地址</li>
+</ol>
+<h3 id="详细解释"><a href="#详细解释" class="headerlink" title="详细解释"></a>详细解释</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/22.png" srcset="/img/loading.gif" lazyload></p>
+<hr>
+<h2 id="3-hitcontraining-uaf"><a href="#3-hitcontraining-uaf" class="headerlink" title="3. hitcontraining_uaf"></a>3. hitcontraining_uaf</h2><h3 id="保护机制检查-2"><a href="#保护机制检查-2" class="headerlink" title="保护机制检查"></a>保护机制检查</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/23.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="主函数分析-2"><a href="#主函数分析-2" class="headerlink" title="主函数分析"></a>主函数分析</h3><p><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/24.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="功能分析-1"><a href="#功能分析-1" class="headerlink" title="功能分析"></a>功能分析</h3><p><strong>add函数：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/25.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>checksec后发现与之前截然不同的结果：有canary保护</li>
-<li>需要想办法绕过canary保护</li>
-<li>查看main函数：</li>
+<li>创建两个堆块</li>
+<li>第一个堆块存储puts函数和content内容地址</li>
+<li>第二个堆块存储content内容</li>
 </ul>
-<p><img src="/image/buuctfday1/21.png" srcset="/img/loading.gif" lazyload></p>
-<p>发现它先生成一个随机数（4字节），如果输入与随机数相同，即可获得flag。可以发现read可以栈溢出，可以通过栈溢出改变随机数从而通过if函数，这就要绕过canary保护。</p>
-<p><strong>Canary保护原理</strong>：是一种用于防护栈溢出的安全机制。其基本原理是在函数调用时，在栈帧的上方放入一个随机值（称为”Canary”），当函数返回时，系统会检查这个随机值是否被修改。如果随机值被修改，说明可能发生了栈溢出，程序将终止运行，从而防止潜在的缓冲区溢出攻击。</p>
+<p><strong>delete函数：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/26.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>找到canary的偏移量：</li>
+<li>存在UAF漏洞，指针未清零</li>
 </ul>
-<p><img src="/image/buuctfday1/22.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>print函数：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/27.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>编写exp：</li>
+<li>跳转到第一个堆块存储的puts函数地址</li>
 </ul>
-<p><img src="/image/buuctfday1/23.png" srcset="/img/loading.gif" lazyload></p>
-<p>注：特别要注意的是<code>%n</code>这个格式化字符串，它的功能是将<code>%n</code>之前打印出来的字符个数（四字节）写入参数地址处（赋值给一个变量）。</p>
+<p><strong>magic函数（后门）：</strong><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/28.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>运行后即可获得flag：</li>
+<li>直接获取shell的后门函数</li>
 </ul>
-<p><img src="/image/buuctfday1/24.png" srcset="/img/loading.gif" lazyload></p>
-<h2 id="8-jarvisoj-level2"><a href="#8-jarvisoj-level2" class="headerlink" title="8. jarvisoj_level2"></a>8. jarvisoj_level2</h2><p><strong>解题步骤</strong>：</p>
-<ul>
-<li>同样的步骤之后查看main函数：</li>
-</ul>
-<p><img src="/image/buuctfday1/25.png" srcset="/img/loading.gif" lazyload></p>
-<p>发现明显栈溢出。但发现system函数调用和<code>/bin/sh</code>是分隔的。于是要把它们连接。</p>
-<p>注：32位的分布是：返回地址+下一次的返回地址+参数1+参数2+…，这里返回地址可以随便指定。</p>
-<ul>
-<li>编写exp：</li>
-</ul>
-<p><img src="/image/buuctfday1/26.png" srcset="/img/loading.gif" lazyload></p>
-<p>运行后即可获得flag。</p>
+<h3 id="利用思路-2"><a href="#利用思路-2" class="headerlink" title="利用思路"></a>利用思路</h3><p>创建两个堆块观察：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/29.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>利用步骤：</strong></p>
+<ol>
+<li>利用UAF漏洞和堆块复用机制</li>
+<li>free掉堆块后创建较小堆块复用之前的堆块结构</li>
+<li>修改第一个堆块的puts函数地址为magic函数地址</li>
+<li>调用print(0)触发magic函数获取shell</li>
+</ol>
+<h3 id="调试过程-1"><a href="#调试过程-1" class="headerlink" title="调试过程"></a>调试过程</h3><p>修改puts地址为magic地址：<br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/30.png" srcset="/img/loading.gif" lazyload><br><img src="/image/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/31.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>注意：</strong> 需要print第一个堆块(print 0)来触发</p>
+<hr>
+<p>本文到此结束！</p>
 
                 
               </div>
@@ -470,8 +452,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>buuctf_day1</div>
-      <div>http://x1nglu0.github.io/2025/10/26/buuctf-day1/</div>
+      <div>pwn的部分堆题复现</div>
+      <div>http://x1nglu0.github.io/2025/10/28/pwn的部分堆题复现/</div>
     </div>
     <div class="license-meta">
       
@@ -483,7 +465,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2025年10月26日</div>
+          <div>2025年10月28日</div>
         </div>
       
       
@@ -515,18 +497,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/10/28/pwn%E7%9A%84%E9%83%A8%E5%88%86%E5%A0%86%E9%A2%98%E5%A4%8D%E7%8E%B0/" title="pwn的部分堆题复现">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">pwn的部分堆题复现</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/10/04/ret2libc/" title="ret2libc">
-                        <span class="hidden-mobile">ret2libc</span>
+                      <a href="/2025/10/26/buuctf-day1/" title="buuctf_day1">
+                        <span class="hidden-mobile">buuctf_day1</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
